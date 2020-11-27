@@ -5,6 +5,7 @@
     v-for="block in blocks" :key="block.id" 
     :handlerRemove="handlerRemove" 
     :handlerSave="handlerSave" 
+    :handlerSetPriority="handlerSetPriority" 
     :block="block" 
     :startX="block.startX" 
     :startY="block.startY" 
@@ -28,11 +29,11 @@ export default {
       posX: '',
       posY: '',
       blocks: [
-        { id: 1, name: 'Tile #1', startX: 10, startY: 10, startWidth: 300, startHeight: 100},
-        { id: 2, name: 'Tile #2', startX: 20, startY: 20, startWidth: 300, startHeight: 100},
-        { id: 3, name: 'Tile #3', startX: 30, startY: 30, startWidth: 300, startHeight: 100},
-        { id: 4, name: 'Tile #4', startX: 40, startY: 40, startWidth: 300, startHeight: 100},
-        { id: 5, name: 'Tile #5', startX: 50, startY: 50, startWidth: 300, startHeight: 100}
+        { id: 1, name: 'Tile #1', isPriority: false, startX: 10, startY: 10, startWidth: 300, startHeight: 100},
+        { id: 2, name: 'Tile #2', isPriority: false, startX: 20, startY: 20, startWidth: 300, startHeight: 100},
+        { id: 3, name: 'Tile #3', isPriority: false, startX: 30, startY: 30, startWidth: 300, startHeight: 100},
+        { id: 4, name: 'Tile #4', isPriority: false, startX: 40, startY: 40, startWidth: 300, startHeight: 100},
+        { id: 5, name: 'Tile #5', isPriority: false, startX: 50, startY: 50, startWidth: 300, startHeight: 100}
       ],
       trash: []
     }
@@ -57,6 +58,7 @@ export default {
         currentEl.startHeight = defaultBoxHeight;
         currentEl.startX = window.innerWidth / 2 - (defaultBoxWidth / 2);
         currentEl.startY = window.innerHeight  / 2 - (defaultBoxHeight / 2);
+        currentEl.isPriority = false;
         
         this.trash = [currentEl, ...this.trash];
         this.blocks = this.blocks.filter(b => b.id != id);
@@ -66,8 +68,21 @@ export default {
         localStorage.trash = JSON.stringify(this.trash);
       }
     },
+    handlerSetPriority (id) {
+      this.blocks = this.blocks.map(b => {
+        if (b.id === id) {
+          b.isPriority = true;
+        } else {
+          b.isPriority = false;
+        }
+        return b
+      });
+
+      // save
+      localStorage.blocks = JSON.stringify(this.blocks);
+    },
     returnFromTrash () {
-      if (this.trash.length > 0) {        
+      if (this.trash.length > 0) {
         this.blocks = [...this.blocks, ...this.trash];
         localStorage.blocks = JSON.stringify(this.blocks);
 
@@ -80,6 +95,12 @@ export default {
   created () {
     if (localStorage.blocks) {
       this.blocks = JSON.parse(localStorage.blocks);
+
+      // Кастыль, чтобы появилось поле у всех, после сохранения
+      if (typeof this.blocks[0].isPriority !== "boolean") {
+        localStorage.removeItem('blocks');
+        localStorage.removeItem('trash');
+      }
     }
     if (localStorage.trash) {
       this.trash = JSON.parse(localStorage.trash);

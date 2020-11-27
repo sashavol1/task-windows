@@ -1,5 +1,5 @@
 <template>
-  <div class="box" :class="{active: active || isDrag}" :style="{ left: posLeft + 'px', top: posTop + 'px', width: width + 'px', height: height + 'px' }">
+  <div class="box" :class="{active: active || isDrag, priority: block.isPriority}" :style="{ left: posLeft + 'px', top: posTop + 'px', width: width + 'px', height: height + 'px' }">
     <div class="box-header" @mousedown="onGrab">
       <div class="box-header__text">{{ title }}</div>
       <div class="box-header__close" @click="removeBlock"></div>
@@ -14,11 +14,14 @@
 </template>
 
 <script>
+import { defaultBoxPadding } from './../Utils'
+
 export default {
   name: 'WindowComp',
   props: {
     handlerRemove: Function,
     handlerSave: Function,
+    handlerSetPriority: Function,
     title: String,
     block: Object,
     startX: Number,
@@ -32,6 +35,7 @@ export default {
       isDrag: false,
       isLoad: false,
       isResize: false,
+      hasPriority: false,
       resizeSide: '',
       active: false,
       posLeft: this.startX,
@@ -44,7 +48,14 @@ export default {
     onActive () {
       this.active = !this.active;
       if (this.active) {
+
+        // set z-index
+        this.setPriority();
+
+        // set hash
         location.hash = this.box.id;
+
+        // load something
         let _this = this;
         this.isLoad = !this.isLoad;
         setTimeout(() => {
@@ -56,8 +67,18 @@ export default {
     },
     onDrag (event) {
       let originalStyles = window.getComputedStyle(this.$el);
-      this.posLeft = parseInt(originalStyles.left) + event.movementX;
-      this.posTop = parseInt(originalStyles.top) + event.movementY;
+      let moveX = parseInt(originalStyles.left) + event.movementX;
+      let moveY = parseInt(originalStyles.top) + event.movementY;
+
+      // это наверное довольно тупое решение, но пока так, надо сделать нулевую точку в самом углу доступного экрана
+      // с ходу не могу придумать, пока как технический долг, пока из вариантов решения большие нагромождения получаются
+      if (window.innerWidth - this.$el.offsetWidth > moveX && -defaultBoxPadding < moveX) {
+        this.posLeft = moveX;
+      }
+
+      if (window.innerHeight - this.$el.offsetHeight > moveY && -defaultBoxPadding < moveY) {
+        this.posTop = moveY;
+      }
     },
     onLetGo (event) {
       document.removeEventListener('mousemove', this.onDrag);
@@ -67,10 +88,15 @@ export default {
         this.saveElements();
       }
     },
-    onGrab () {
-      document.addEventListener('mousemove', this.onDrag);
-      document.addEventListener('mouseup', this.onLetGo);
-      this.isDrag = true;
+    onGrab (event) {
+      // Grab не работает с удалением
+      // Наверно не очень изящное решение
+      if (event.target.className !== 'box-header__close') {        
+        document.addEventListener('mousemove', this.onDrag);
+        document.addEventListener('mouseup', this.onLetGo);
+        this.isDrag = true;
+        this.setPriority();
+      }
     },
     saveElements () {
       this.box.startX = this.posLeft;
@@ -90,34 +116,23 @@ export default {
     },
     onResizeStart (event) {
       if (this.isResize) {
-
         if (this.resizeSide === 'width') {
           this.width = this.$el.offsetWidth + event.movementX;
         } else if (this.resizeSide === 'height') {
           this.height = this.$el.offsetHeight + event.movementY;
         } else {
-          throw new Error('resize fail')
+          throw new Error('resize fail');
         }
       }
+    },
+    setPriority() {
+      // Может лучше конечно привязывать в хешу 
+      // чтобы это всю работало с историей, функционал тогда вырастает кратно
+      this.handlerSetPriority(this.box.id);
     },
     removeBlock() {
       this.handlerRemove(this.box.id);
     }
-  }, 
-  mounted () {
-
-    // if (localStorage.posLeft) {
-    //   this.posLeft = localStorage.posLeft;
-    // }
-    // if (localStorage.posTop) {
-    //   this.posTop = localStorage.posTop;
-    // }
-    // if (localStorage.width) {
-    //   this.width = localStorage.width;
-    // }
-    // if (localStorage.height) {
-    //   this.height = localStorage.height;
-    // }
   }
 }
 </script>
@@ -142,6 +157,9 @@ export default {
     &.active {
       opacity: 1;
       z-index: 10;
+    }
+    &.priority {
+      z-index: 11;
     }
 
     &-header {
