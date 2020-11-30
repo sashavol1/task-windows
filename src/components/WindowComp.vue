@@ -1,5 +1,5 @@
 <template>
-  <div class="box" :class="{active: active || isDrag, priority: block.isPriority}" :style="{ left: posLeft + 'px', top: posTop + 'px', width: width + 'px', height: height + 'px' }">
+  <div class="box" :class="{active: active || isDrag}" :style="{ left: posLeft + 'px', top: posTop + 'px', width: width + 'px', height: height + 'px' , zIndex: -index + 10 }">
     <div class="box-header" @mousedown="onGrab">
       <div class="box-header__text">{{ title }}</div>
       <div class="box-header__close" @click="removeBlock"></div>
@@ -21,9 +21,10 @@ export default {
   props: {
     handlerRemove: Function,
     handlerSave: Function,
-    handlerSetPriority: Function,
+    handlerResortPriority: Function,
     title: String,
     block: Object,
+    index: Number,
     startX: Number,
     startY: Number,
     startWidth: Number,
@@ -53,7 +54,7 @@ export default {
         this.setPriority();
 
         // set hash
-        location.hash = this.box.id;
+        this.setHash(this.box.id);
 
         // load something
         let _this = this;
@@ -67,8 +68,8 @@ export default {
     },
     onDrag (event) {
       let originalStyles = window.getComputedStyle(this.$el);
-      let moveX = parseInt(originalStyles.left) + event.movementX;
-      let moveY = parseInt(originalStyles.top) + event.movementY;
+      let moveX = (parseInt(originalStyles.left) + event.movementX);
+      let moveY = (parseInt(originalStyles.top) + event.movementY);
 
       // это наверное довольно тупое решение, но пока так, надо сделать нулевую точку в самом углу доступного экрана
       // с ходу не могу придумать, пока как технический долг, пока из вариантов решения большие нагромождения получаются
@@ -96,6 +97,7 @@ export default {
         document.addEventListener('mouseup', this.onLetGo);
         this.isDrag = true;
         this.setPriority();
+        this.setHash(this.box.id);
       }
     },
     saveElements () {
@@ -126,9 +128,10 @@ export default {
       }
     },
     setPriority() {
-      // Может лучше конечно привязывать в хешу 
-      // чтобы это всю работало с историей, функционал тогда вырастает кратно
-      this.handlerSetPriority(this.box.id);
+      this.handlerResortPriority(this.box);
+    },
+    setHash(id) {
+      location.hash = id;
     },
     removeBlock() {
       this.handlerRemove(this.box.id);

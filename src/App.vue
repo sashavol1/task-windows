@@ -2,11 +2,12 @@
   <div id="app">
     <div class="button-return" @click="returnFromTrash">+ Return tile to trading desk {{ trash.length }}</div>
     <WindowComp  
-    v-for="block in blocks" :key="block.id" 
+    v-for="(block, index) in blocks" :key="block.id" 
     :handlerRemove="handlerRemove" 
     :handlerSave="handlerSave" 
-    :handlerSetPriority="handlerSetPriority" 
+    :handlerResortPriority="handlerResortPriority" 
     :block="block" 
+    :index="index" 
     :startX="block.startX" 
     :startY="block.startY" 
     :startWidth="block.startWidth" 
@@ -68,16 +69,11 @@ export default {
         localStorage.trash = JSON.stringify(this.trash);
       }
     },
-    handlerSetPriority (id) {
-      this.blocks = this.blocks.map(b => {
-        if (b.id === id) {
-          b.isPriority = true;
-        } else {
-          b.isPriority = false;
-        }
-        return b
-      });
-
+    handlerResortPriority (box) {
+      // resort items
+      let leftElements = this.blocks.filter(b => b.id != box.id);
+      this.blocks = [box, ...leftElements];
+      
       // save
       localStorage.blocks = JSON.stringify(this.blocks);
     },
@@ -91,7 +87,7 @@ export default {
         localStorage.removeItem('trash');
       }
     }
-  }, 
+  },
   created () {
     if (localStorage.blocks) {
       this.blocks = JSON.parse(localStorage.blocks);
