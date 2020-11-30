@@ -159,10 +159,6 @@ export default {
     justify-content: space-between;
     &.active {
       opacity: 1;
-      z-index: 10;
-    }
-    &.priority {
-      z-index: 11;
     }
 
     &-header {
