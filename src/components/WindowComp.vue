@@ -1,5 +1,5 @@
 <template>
-  <div class="box" :class="{active: active || isDrag}" :style="{ left: posLeft + 'px', top: posTop + 'px', width: width + 'px', height: height + 'px' , zIndex: -index + 10 }">
+  <div class="box" :class="{active: active || isDrag}" :style="{ left: posLeft + 'px', top: posTop + 'px', width: width + 'px', height: height + 'px' , zIndex: -index + box.length + 1 }">
     <div class="box-header" @mousedown="onGrab">
       <div class="box-header__text">{{ title }}</div>
       <div class="box-header__close" @click="removeBlock"></div>
