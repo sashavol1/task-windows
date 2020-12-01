@@ -7,6 +7,7 @@
     :handlerSave="handlerSave" 
     :handlerResortPriority="handlerResortPriority" 
     :block="block" 
+    :sizeBlocks="blocks.length" 
     :index="index" 
     :startX="block.startX" 
     :startY="block.startY" 
